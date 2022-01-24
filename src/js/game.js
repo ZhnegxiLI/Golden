@@ -108,7 +108,7 @@ export default class Game {
     initApp() {
         this._app = new PIXI.Application({
             width: this.stageWidth, 
-            height: this.stageWidth * (this._designHeight / this._designWidth),
+            height: this.stageWidth * (this._designHeight / this._designWidth), // TODO CHANGE WIDTH HEIGHT AS SCREEN WIDTH && HEIGHT
             forceCanvas: true,
             resolution: 2,
             antialias: true, //消除锯齿
@@ -118,6 +118,7 @@ export default class Game {
         // 计算元素缩放比例
         this.scale = this.stageWidth / this._designWidth;
         
+        // 将画布加入Id = stage 的div中
         document.getElementById('stage').appendChild(this._app.view);
 
         console.log('PIXI初始化完毕');
@@ -161,11 +162,11 @@ export default class Game {
      * 初始化天空和草地
      */
     initSkyBackground() {
+        const { background1, logo, head, coinsContainer, iconText } = resources;
+
         // 图层1
         this._backgroundContainer_1 = new PIXI.Container();
         this._app.stage.addChild(this._backgroundContainer_1);
-
-        const { background1, logo, head, coinsContainer, iconText } = resources;
 
         background1.sprite.scale.set(this.scale, this.scale);
         this._backgroundContainer_1.addChild(background1.sprite);
@@ -213,10 +214,10 @@ export default class Game {
      * 初始化地表
      */
     initLandBackground() {
+        const { background1, background2 } = resources;
+
         this._backgroundContainer_2 = new PIXI.Container();
         this._app.stage.addChild(this._backgroundContainer_2);
-
-        const { background1, background2 } = resources;
 
         background2.sprite.scale.set(this.scale, this.scale);
         this._backgroundContainer_2.addChild(background2.sprite);

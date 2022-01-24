@@ -3,7 +3,9 @@ const webpack = require('webpack');
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
+// TODO add deploiment webpack file 
 module.exports = {
 	mode: 'development',
 	devtool: 'source-map',
@@ -26,6 +28,13 @@ module.exports = {
 		}),
 		new MiniCssExtractPlugin({
 			filename: "css/[name].[chunkhash:8].css",
+		}),
+		new CopyWebpackPlugin([
+			{ from: 'src/images/', to: 'images/' }
+		], {
+			ignore: [],
+			debug: 'debug',
+			copyUnmodified: true
 		}),
 	],
 
@@ -64,17 +73,6 @@ module.exports = {
 					'less-loader',
 					'postcss-loader'
 				]
-			},
-			{
-				test: /\.(png|jpg|jpeg|gif)$/,
-				use: [
-					{
-						loader:'file-loader',
-						options:{
-							name: "Images/[name].[ext]"
-						}
-					}
-					]
 			}
 		]
 	},

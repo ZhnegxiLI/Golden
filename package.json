@@ -15,6 +15,7 @@
     "babel-plugin-syntax-dynamic-import": "^6.18.0",
     "babel-polyfill": "^6.26.0",
     "concurrently": "^4.1.0",
+    "copy-webpack-plugin": "^5.1.1",
     "css-loader": "^3.2.0",
     "expose-loader": "^0.7.5",
     "file-loader": "^4.3.0",
@@ -31,9 +32,9 @@
     "webpack-dev-server": "^3.8.2"
   },
   "dependencies": {
+    "gsap": "^3.0.4",
     "jquery": "^3.1.1",
     "pixi.js": "^4.5.5",
-    "gsap": "^3.0.4",
     "vconsole": "^3.3.4"
   }
 }
