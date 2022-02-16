@@ -162,11 +162,13 @@ export class Boom extends Props{
  * 福袋对象
  */
 export class LuckyBag extends Props{
-    constructor(id, x, y, scale, container) {
+    constructor(id, x, y, scale, container,quantity) {
         super(id, x, y, scale, container);
         this.sprite = new PIXI.Sprite(PIXI.Texture.fromImage(resources.luckyBag.url));
         this.propContainer = new PIXI.Container();
         this.hitRec = new PIXI.Graphics();
+
+        this.quantity = quantity;
     }
 
     /**

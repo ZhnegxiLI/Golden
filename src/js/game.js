@@ -1,6 +1,16 @@
-import { resources } from './loader';
-import { Golden, Boom, LuckyBag, Ghost } from './props';
-import { alipayH5Utils, seedRandom } from './utils';
+import {
+    resources
+} from './loader';
+import {
+    Golden,
+    Boom,
+    LuckyBag,
+    Ghost
+} from './props';
+import {
+    alipayH5Utils,
+    seedRandom
+} from './utils';
 import * as AnimationOptions from './animation';
 
 import './lib/AlloyTouch';
@@ -51,6 +61,7 @@ export default class Game {
         this.stageHeight = height;
         this.bump = bump;
         this.coins = 0; // 当前金币数量
+        this.targetCoins = 0; // 过关所需金币
         this.playCount = 0; // 已经玩的次数
         this.cells = []; // 格子分布情况
         this.chances = 0; // 一共可以玩多少次
@@ -107,7 +118,7 @@ export default class Game {
 
     initApp() {
         this._app = new PIXI.Application({
-            width: this.stageWidth, 
+            width: this.stageWidth,
             height: this.stageWidth * (this._designHeight / this._designWidth), // TODO CHANGE WIDTH HEIGHT AS SCREEN WIDTH && HEIGHT
             forceCanvas: true,
             resolution: 2,
@@ -117,7 +128,7 @@ export default class Game {
 
         // 计算元素缩放比例
         this.scale = this.stageWidth / this._designWidth;
-        
+
         // 将画布加入Id = stage 的div中
         document.getElementById('stage').appendChild(this._app.view);
 
@@ -129,33 +140,34 @@ export default class Game {
      */
     initScroll() {
         const target = document.querySelector("#stage");
-        Transform(target,true);
+        Transform(target, true);
 
-        const { background1 } = resources;
+        const {
+            background1
+        } = resources;
 
         new AlloyTouch({
             touch: 'body', //反馈触摸的dom
-            vertical: true,//不必需，默认是true代表监听竖直方向touch
+            vertical: true, //不必需，默认是true代表监听竖直方向touch
             target: target,
-            property: 'translateY',  //被滚动的属性
-            sensitivity: 1,//不必需,触摸区域的灵敏度，默认值为1，可以为负数
-            factor: 1,//不必需,默认值是1代表touch区域的1px的对应target.y的1
+            property: 'translateY', //被滚动的属性
+            sensitivity: 1, //不必需,触摸区域的灵敏度，默认值为1，可以为负数
+            factor: 1, //不必需,默认值是1代表touch区域的1px的对应target.y的1
             min: -background1.sprite.height + this.stageHeight, //不必需,滚动属性的最小值
             max: 0, //不必需,滚动属性的最大值
-            change: function (value) {
-            },
+            change: function (value) {},
         });
 
-   
+
         console.log('舞台滚动初始化完毕');
     }
 
     initStage() {
         this.initSkyBackground();
         this.initLandBackground();
-        // this.initMainBackground();
-        // this.initPropDialogContainer();
-        // this.initScroll();
+        this.initMainBackground();
+        this.initPropDialogContainer();
+        this.initScroll();
         console.log('舞台初始化完毕');
 
     }
@@ -164,7 +176,12 @@ export default class Game {
      * 初始化天空和草地
      */
     initSkyBackground() {
-        const { background1, logo, head, coinsContainer } = resources;
+        const {
+            background1,
+            logo,
+            head,
+            coinsContainer
+        } = resources;
 
         // 图层1
         this._backgroundContainer_1 = new PIXI.Container();
@@ -196,7 +213,7 @@ export default class Game {
         this.updateCoinsCount(this.coins);
 
         // logo
-        logo.sprite.scale.set(this.scale,this.scale);
+        logo.sprite.scale.set(this.scale, this.scale);
         logo.sprite.position.set(
             580 * this.scale,
             30 * this.scale)
@@ -209,10 +226,10 @@ export default class Game {
             fill: "#ffe02e",
             stroke: '#A86190',
             fontWeight: 'bolder'
-          });
+        });
 
         // TODO PLACE INTO CONFIGURATION
-        let message = new PIXI.Text("猪猪金矿",style);
+        let message = new PIXI.Text("猪猪金矿", style);
         message.scale.set(this.scale, this.scale);
         message.position.set(
             100 * this.scale,
@@ -226,50 +243,92 @@ export default class Game {
      * 初始化地表
      */
     initLandBackground() {
-        const { background1, background2 } = resources;
+        const {
+            background1,
+            background2
+        } = resources;
 
         this._backgroundContainer_2 = new PIXI.Container();
 
         this._app.stage.addChild(this._backgroundContainer_2);
 
 
-         // TODO REMOVE: only for test , click landBackground replce button start 
-         this._backgroundContainer_2.interactive = true; 
-         this._backgroundContainer_2.on('pointertap',event=>{
-            if (this.goldenHunter.ropeStop) {
+       // Tape screen event 
+        this._backgroundContainer_2.interactive = true;
+        this._backgroundContainer_2.on('pointertap', event => {
+            console.log(this.checkGameOver())
+            if (this.goldenHunter.ropeStop && !this._dialogContainer.visible && !this.checkGameOver()) { 
                 this.goldenHunter.hookStop = true;
                 this.goldenHunter.ropeStop = false;
                 this.goldenHunter.roteExtend = true;
                 // 给一个初始速度
                 this.goldenHunter.ropeCurrentSpeed = this.goldenHunter.ropeInitSpeed;
             }
-         });
+        });
 
         background2.sprite.scale.set(this.scale, this.scale);
         this._backgroundContainer_2.addChild(background2.sprite);
 
         let background2Top = background1.sprite.height - background2.sprite.height;
         this._backgroundContainer_2.y = background2Top;
-        
-        const { buttonBack, buttonShare, textBottomHasChance, textBottomChanceOut } = resources;
+
+        const {
+            buttonStart,
+            buttonBack,
+            buttonShare,
+            textBottomHasChance,
+            textBottomChanceOut
+        } = resources;
 
         // 底部区域容器
         const bottomAreaContainer = new PIXI.Container();
         bottomAreaContainer.name = 'bottomAreaContainer';
-        bottomAreaContainer.y = 880 * this.scale;
+        bottomAreaContainer.y = 980 * this.scale;
         this._backgroundContainer_2.addChild(bottomAreaContainer);
 
 
 
+        // 开始游戏按钮
+        buttonStart.sprite.pivot.x = buttonStart.sprite.width / 2;
+        buttonStart.sprite.scale.set(this.scale, this.scale);
+        bottomAreaContainer.addChild(buttonStart.sprite);
+
+        buttonStart.sprite.buttonMode = true;
+        buttonStart.sprite.interactive = true;
+        buttonStart.sprite.y = 90 * this.scale;
+
+        buttonStart.sprite.on('pointertap', () => {
+            console.log('start games button')
+
+            let currentLevel = localStorage.getItem('level') ?? 0;
+            currentLevel = parseInt(currentLevel)+1;
+            localStorage.setItem('level' ,currentLevel);
+
+            window.location.reload(true);
+        });
+        buttonStart.sprite.visible = false;
+
+
         // 返回游戏按钮
         buttonBack.sprite.pivot.x = buttonBack.sprite.width / 2;
+        
         buttonBack.sprite.scale.set(this.scale, this.scale);
+
+        buttonBack.sprite.y = 100 * this.scale;
         bottomAreaContainer.addChild(buttonBack.sprite);
 
         buttonBack.sprite.buttonMode = true;
         buttonBack.sprite.interactive = true;
         buttonBack.sprite.on('pointertap', () => {
             // 点击返回按钮
+            let currentLevel = localStorage.getItem('level') ?? 0;
+            if(currentLevel >0){
+                currentLevel = parseInt(currentLevel)-1;
+            }
+            localStorage.setItem('level' ,currentLevel);
+
+            // Reload all windows 
+            window.location.reload(true);
         });
         buttonBack.sprite.visible = false;
 
@@ -288,7 +347,7 @@ export default class Game {
         // 底部仍存在机会的容器
         this._textBottomHasChanceContainer = new PIXI.Container();
         bottomAreaContainer.addChild(this._textBottomHasChanceContainer);
-        this._textBottomHasChanceContainer.y = 120 * this.scale;
+        this._textBottomHasChanceContainer.y = 220 * this.scale;
 
         textBottomHasChance.sprite.pivot.x = textBottomHasChance.sprite.width / 2;
         textBottomHasChance.sprite.x = this._backgroundContainer_2.width / 2;
@@ -311,7 +370,7 @@ export default class Game {
         // 底部无机会文案
         textBottomChanceOut.sprite.pivot.x = textBottomChanceOut.sprite.width / 2;
         textBottomChanceOut.sprite.x = this._backgroundContainer_2.width / 2;
-        textBottomChanceOut.sprite.y = 120 * this.scale;
+        textBottomChanceOut.sprite.y = 220 * this.scale;
         textBottomChanceOut.sprite.scale.set(this.scale, this.scale);
         bottomAreaContainer.addChild(textBottomChanceOut.sprite);
         textBottomChanceOut.sprite.visible = false;
@@ -342,7 +401,9 @@ export default class Game {
         const goldenCarContainer = new PIXI.Container();
         this._gameContainer.addChild(goldenCarContainer);
 
-        const { goldenCar } = resources;
+        const {
+            goldenCar
+        } = resources;
 
         goldenCar.sprite.scale.set(this.scale, this.scale);
         goldenCar.sprite.x = 344 * this.scale;
@@ -362,7 +423,9 @@ export default class Game {
         this._ropeContainer.addChild(rope);
 
         // 创建爪子
-        const { goldenHook } = resources;
+        const {
+            goldenHook
+        } = resources;
         goldenHook.sprite.scale.set(this.scale, this.scale);
         goldenHook.sprite.position.set(
             goldenHook.sprite.width / 2, this.goldenHunter.ropeInitHeight * this.scale + goldenHook.sprite.height / 2);
@@ -375,7 +438,7 @@ export default class Game {
         this._ropeContainer.pivot.y = 0;
         this._ropeContainer.position.set(372 * this.scale, 150 * this.scale);
 
-        
+
         // 爪子转动动画
         this._app.ticker.add(delta => {
             if (this.chances - this.playCount > 0) {
@@ -386,7 +449,7 @@ export default class Game {
                         this.goldenHunter.right = true;
                     }
                 }
-    
+
                 if (this.goldenHunter.right && !this.goldenHunter.hookStop) {
                     this._ropeContainer.rotation -= 0.01 * delta;
                     if (this._ropeContainer.rotation < -0.8) {
@@ -409,12 +472,12 @@ export default class Game {
                         goldenHook.sprite.y += this.goldenHunter.ropeCurrentSpeed;
 
                         // 碰撞检测
-                        for (let i = 0;i < this.goldenArea.list.length;i++) {
+                        for (let i = 0; i < this.goldenArea.list.length; i++) {
                             let prop = this.goldenArea.list[i];
                             if (!(prop instanceof Ghost)) {
                                 if (prop.propContainer.visible) {
                                     if (this.bump.hit(
-                                        goldenHook.sprite, prop.hitRec, false, false, true)) {
+                                            goldenHook.sprite, prop.hitRec, false, false, true)) {
                                         this.goldenHunter.roteExtend = false;
                                         prop.propContainer.visible = false;
                                         this.distinguish(prop, i, rope.height);
@@ -470,37 +533,24 @@ export default class Game {
         // 道具层每一个道具的偏移量
         const offsetX = (this._designWidth - this.goldenArea.initWidth) / 2;
         const offsetY = 360;
-        
+
         // 格子总数
-        const sum =  this.goldenArea.row * this.goldenArea.column;
+        const sum = this.goldenArea.row * this.goldenArea.column;
         // 容器宽度
         const containerWidth = this.goldenArea.initWidth / this.goldenArea.column;
         // 容器高度
         const containerHeight = this.goldenArea.initHeight / this.goldenArea.row;
 
-        for (let i = 0;i < sum;i++) {
+        this.rand = Math.random(); // todo change place 
+        for (let i = 0; i < this.cells.length; i++) {
             const rowIndex = parseInt(i / this.goldenArea.column, 10);
             const columnIndex = i % this.goldenArea.column;
             let random = seedRandom(i * this.rand, 0, 1);
-
             const x = offsetX + columnIndex * containerWidth + random * (containerWidth / 2);
             const y = offsetY + rowIndex * containerHeight + random * (containerHeight / (random * (i % 3 ? 4 : 2)));
 
-            // 容器外壳
-            // const g = new PIXI.Graphics();
-            // g.lineStyle(2, 0xFF00FF, 1);
-            // g.beginFill(0x650A5A, 0.25);
-            // g.drawRoundedRect(
-            //     (offsetX + columnIndex * containerWidth) * this.scale, 
-            //     (offsetY + rowIndex * containerHeight) * this.scale, 
-            //     containerWidth * this.scale, 
-            //     containerHeight * this.scale,
-            // );
-            // g.endFill();
-            // propsContainer.addChild(g);
-
             let prop = {};
-            switch(this.cells[i].type) {
+            switch (this.cells[i].type) {
                 case 'coin':
                     prop = new Golden(i, this.cells[i].amount, x, y, this.scale, propsContainer);
                     break;
@@ -508,7 +558,7 @@ export default class Game {
                     prop = new Boom(i, x, y, this.scale, propsContainer);
                     break;
                 case 'lootbox':
-                    prop = new LuckyBag(i, x, y, this.scale, propsContainer);
+                    prop = new LuckyBag(i, x, y, this.scale, propsContainer, this.cells[i].amount);
                     break;
                 case 'blank':
                     prop = new Ghost(i, x, y, this.scale, propsContainer);
@@ -530,19 +580,22 @@ export default class Game {
         const mask = new PIXI.Graphics();
         mask.beginFill(0x000000, 0.5);
         mask.drawRect(
-            0, 0, 
+            0, 0,
             this._app.stage.width,
             this._app.stage.height,
         );
         mask.endFill();
         this._dialogContainer.addChild(mask);
 
-        const { propHalo, dialogClose } = resources;
+        const {
+            propHalo,
+            dialogClose
+        } = resources;
 
         // 初始化光晕
         propHalo.sprite.scale.set(this.scale, this.scale);
         propHalo.sprite.position.set(
-            this._dialogContainer.width / 2, 
+            this._dialogContainer.width / 2,
             this._dialogContainer.height / 2 - 100 * this.scale);
         propHalo.sprite.anchor.set(0.5);
         this._dialogContainer.addChild(propHalo.sprite);
@@ -550,7 +603,7 @@ export default class Game {
         // 初始化关闭按钮
         dialogClose.sprite.scale.set(this.scale, this.scale);
         dialogClose.sprite.position.set(
-            this._dialogContainer.width / 2 + propHalo.sprite.width / 3, 
+            this._dialogContainer.width / 2 + propHalo.sprite.width / 3,
             this._dialogContainer.height / 2 - propHalo.sprite.height / 3 - 100 * this.scale,
         );
         dialogClose.sprite.anchor.set(0.5);
@@ -574,11 +627,21 @@ export default class Game {
      */
     showPropDialog(prop) {
         this._dialogContainer.visible = true;
-        
+
         let prizeMainContainer = this._dialogContainer.getChildByName('prizeMainContainer');
         prizeMainContainer.removeChildren();
 
-        const { buttonStart, gold1, gold2, gold3, gold4, dialogBoom, dialogBagEmpty, dialogBagGoldenFull, dialogBagHongBaoFull } = resources;
+        const {
+            buttonStart,
+            gold1,
+            gold2,
+            gold3,
+            gold4,
+            dialogBoom,
+            dialogBagEmpty,
+            dialogBagGoldenFull,
+            dialogBagHongBaoFull
+        } = resources;
 
         // 获奖主文案
         const prizeTitleText = new PIXI.Text();
@@ -586,7 +649,7 @@ export default class Game {
         prizeTitleText.scale.set(this.scale, this.scale);
         prizeTitleText.style = dialogTitleStyle;
         prizeTitleText.position.set(
-            this._dialogContainer.width / 2, 
+            this._dialogContainer.width / 2,
             this._dialogContainer.height / 2 + 150 * this.scale,
         );
         prizeMainContainer.addChild(prizeTitleText);
@@ -597,7 +660,7 @@ export default class Game {
         prizeSubTitleText.scale.set(this.scale, this.scale);
         prizeSubTitleText.style = dialogSubTitleStyle;
         prizeSubTitleText.position.set(
-            this._dialogContainer.width / 2, 
+            this._dialogContainer.width / 2,
             this._dialogContainer.height / 2 + 220 * this.scale,
         );
         prizeMainContainer.addChild(prizeSubTitleText);
@@ -606,9 +669,11 @@ export default class Game {
         buttonStart.sprite.interactive = false;
 
         // 初始化抓到的奖品
-        const { data } = prop;
+        const {
+            data
+        } = prop;
         let prizeIconSprite = null;
-        switch(prop.type) {
+        switch (prop.type) {
             case alipayH5Utils.PROP_GOLDEN:
                 if (data.amount == 1) {
                     prizeIconSprite = new PIXI.Sprite(PIXI.Texture.fromImage(gold1.url));
@@ -656,7 +721,7 @@ export default class Game {
                     prizeIconSprite = new PIXI.Sprite(PIXI.Texture.fromImage(dialogBagHongBaoFull.url));
                     prizeSubTitleText.text = `获得了${data.name}`;
                 }
-                
+
                 prizeIconSprite.scale.set(this.scale, this.scale);
                 break;
         }
@@ -664,7 +729,7 @@ export default class Game {
         // 设置显示的奖品
         prizeIconSprite.anchor.set(0.5);
         prizeIconSprite.position.set(
-            this._dialogContainer.width / 2, 
+            this._dialogContainer.width / 2,
             this._dialogContainer.height / 2 - 100 * this.scale,
         );
         prizeMainContainer.addChild(prizeIconSprite);
@@ -674,7 +739,9 @@ export default class Game {
      * 隐藏道具弹窗
      */
     hidePropDialog() {
-        const { buttonStart } = resources;
+        const {
+            buttonStart
+        } = resources;
         // 恢复开始游戏按钮的点击 
         buttonStart.sprite.interactive = true;
 
@@ -687,9 +754,9 @@ export default class Game {
      */
     updateCoinsCount(coins) {
         const coinsText = this._backgroundContainer_1.getChildByName('coinsText');
-        coinsText.text = coins;
+        coinsText.text = coins + '/' + this.targetCoins;
         // 这里我们假定金币数量最多到10000，因此位数是5位
-        coinsText.x = (200 + (5 - String(coins).length) * 10) * this.scale;
+        coinsText.x = (170 + (5 - String(coins).length) * 10) * this.scale;
         coinsText.y = 60 * this.scale;
     }
 
@@ -697,14 +764,20 @@ export default class Game {
      * 更新底部区域显示元素
      */
     updateBottomArea() {
-        const { buttonStart, buttonBack, buttonShare, textBottomChanceOut } = resources;
+        const {
+            buttonStart,
+            buttonBack,
+            buttonShare,
+            textBottomChanceOut
+        } = resources;
 
         this._textBottomHasChanceContainer.getChildByName('chanceCountText').text = this.chances - this.playCount;
 
+        // TODO CHANGE START AND RETURN DISPLAY
         if (this.chances - this.playCount > 0) {
             buttonStart.sprite.x = this._backgroundContainer_2.width / 2;
 
-            buttonStart.sprite.visible = true;
+            buttonStart.sprite.visible = false;
             buttonBack.sprite.visible = false;
             buttonShare.sprite.visible = false;
             this._textBottomHasChanceContainer.visible = true;
@@ -728,6 +801,12 @@ export default class Game {
             this._textBottomHasChanceContainer.visible = false;
             textBottomChanceOut.sprite.visible = true;
         }
+
+
+
+        if(this.checkWinGame()){
+            buttonStart.sprite.visible = true;
+        }
     }
 
     /**
@@ -738,7 +817,15 @@ export default class Game {
     distinguish(prop, cell, ropeHeight) {
         // 初始化钩子勾到的元素
         // this._ropeContainer.removeChild(this._ropeContainer.getChildByName('hitSprite'));
-        const { gold1, gold2, gold3, gold4, boom, luckyBag, goldenHook } = resources;
+        const {
+            gold1,
+            gold2,
+            gold3,
+            gold4,
+            boom,
+            luckyBag,
+            goldenHook
+        } = resources;
 
         if (prop instanceof Golden) {
             this._dialogData = {
@@ -749,7 +836,7 @@ export default class Game {
             };
 
             let hitSprite;
-            switch(prop.quantity) {
+            switch (prop.quantity) {
                 case 1:
                     hitSprite = new PIXI.Sprite(PIXI.Texture.fromImage(gold1.url));
                     break;
@@ -774,7 +861,7 @@ export default class Game {
             );
             this._ropeContainer.addChild(hitSprite);
         }
-    
+
         if (prop instanceof Boom) {
             this._dialogData = {
                 type: alipayH5Utils.PROP_BOOM,
@@ -789,12 +876,17 @@ export default class Game {
             );
             this._ropeContainer.addChild(hitSprite);
         }
-    
+
         if (prop instanceof LuckyBag) {
             this._dialogData = {
-                type: alipayH5Utils.PROP_LUCKY_BUG_EMPTY,
-                // type: alipayH5Utils.PROP_LUCKY_BUG_FULL,
+                type: alipayH5Utils.PROP_LUCKY_BUG_FULL,
+                data: {
+                    amount: prop.quantity,
+                    type: 'coin'
+                }
             };
+
+            this.coins += prop.quantity;
 
             let hitSprite = new PIXI.Sprite(PIXI.Texture.fromImage(luckyBag.url));
             hitSprite.name = 'hitSprite';
@@ -821,13 +913,27 @@ export default class Game {
         this.updateBottomArea();
     }
 
-    init(coins, playCount, cells, chances, shares, rand) {
+
+    /*
+     * Check if game is finish
+     */
+    checkGameOver() {
+        return this.checkWinGame() || (this.playCount >= this.chances);
+    }
+
+    checkWinGame() {
+        return this.coins >= this.targetCoins
+    }
+
+    init(coins, playCount, cells, chances, shares, rand, targetCoins) {
         this.coins = coins; // 初始币数量
         this.playCount = playCount; // 已玩次数
-        this.cells = cells; // object 数组 todo 改为随机
+        this.cells = cells; // pros 数组 
         this.chances = chances; // 剩余钩子次数
         this.shares = shares;
         this.rand = rand; // 一个随机数
+
+        this.targetCoins = targetCoins;
 
         this.initApp();
         this.initStage();
