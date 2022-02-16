@@ -146,23 +146,25 @@ export default class Game {
             },
         });
 
+   
         console.log('舞台滚动初始化完毕');
     }
 
     initStage() {
         this.initSkyBackground();
         this.initLandBackground();
-        this.initMainBackground();
-        this.initPropDialogContainer();
-        this.initScroll();
+        // this.initMainBackground();
+        // this.initPropDialogContainer();
+        // this.initScroll();
         console.log('舞台初始化完毕');
+
     }
 
     /**
      * 初始化天空和草地
      */
     initSkyBackground() {
-        const { background1, logo, head, coinsContainer, iconText } = resources;
+        const { background1, logo, head, coinsContainer } = resources;
 
         // 图层1
         this._backgroundContainer_1 = new PIXI.Container();
@@ -200,12 +202,22 @@ export default class Game {
             30 * this.scale)
         this._backgroundContainer_1.addChild(logo.sprite);
 
-        // Logo字
-        iconText.sprite.scale.set(this.scale, this.scale);
-        iconText.sprite.position.set(
-            95 * this.scale,
-            150 * this.scale)
-        this._backgroundContainer_1.addChild(iconText.sprite);
+        // logo text
+        let style = new PIXI.TextStyle({
+            fontFamily: 'PingFangSC-Regular, sans-serif',
+            fontSize: 50,
+            fill: "#ffe02e",
+            stroke: '#A86190',
+            fontWeight: 'bolder'
+          });
+
+        // TODO PLACE INTO CONFIGURATION
+        let message = new PIXI.Text("猪猪金矿",style);
+        message.scale.set(this.scale, this.scale);
+        message.position.set(
+            100 * this.scale,
+            160 * this.scale);
+        this._backgroundContainer_1.addChild(message);
 
         console.log('天空和草地初始化完毕');
     }
@@ -217,30 +229,13 @@ export default class Game {
         const { background1, background2 } = resources;
 
         this._backgroundContainer_2 = new PIXI.Container();
+
         this._app.stage.addChild(this._backgroundContainer_2);
 
-        background2.sprite.scale.set(this.scale, this.scale);
-        this._backgroundContainer_2.addChild(background2.sprite);
 
-        let background2Top = background1.sprite.height - background2.sprite.height;
-        this._backgroundContainer_2.y = background2Top;
-        
-        const { buttonStart, buttonBack, buttonShare, textBottomHasChance, textBottomChanceOut } = resources;
-
-        // 底部区域容器
-        const bottomAreaContainer = new PIXI.Container();
-        bottomAreaContainer.name = 'bottomAreaContainer';
-        bottomAreaContainer.y = 880 * this.scale;
-        this._backgroundContainer_2.addChild(bottomAreaContainer);
-
-        // 开始游戏按钮
-        buttonStart.sprite.pivot.x = buttonStart.sprite.width / 2;
-        buttonStart.sprite.scale.set(this.scale, this.scale);
-        bottomAreaContainer.addChild(buttonStart.sprite);
-
-        buttonStart.sprite.buttonMode = true;
-        buttonStart.sprite.interactive = true;
-        buttonStart.sprite.on('pointertap', () => {
+         // TODO REMOVE: only for test , click landBackground replce button start 
+         this._backgroundContainer_2.interactive = true; 
+         this._backgroundContainer_2.on('pointertap',event=>{
             if (this.goldenHunter.ropeStop) {
                 this.goldenHunter.hookStop = true;
                 this.goldenHunter.ropeStop = false;
@@ -248,8 +243,23 @@ export default class Game {
                 // 给一个初始速度
                 this.goldenHunter.ropeCurrentSpeed = this.goldenHunter.ropeInitSpeed;
             }
-        });
-        buttonStart.sprite.visible = false;
+         });
+
+        background2.sprite.scale.set(this.scale, this.scale);
+        this._backgroundContainer_2.addChild(background2.sprite);
+
+        let background2Top = background1.sprite.height - background2.sprite.height;
+        this._backgroundContainer_2.y = background2Top;
+        
+        const { buttonBack, buttonShare, textBottomHasChance, textBottomChanceOut } = resources;
+
+        // 底部区域容器
+        const bottomAreaContainer = new PIXI.Container();
+        bottomAreaContainer.name = 'bottomAreaContainer';
+        bottomAreaContainer.y = 880 * this.scale;
+        this._backgroundContainer_2.addChild(bottomAreaContainer);
+
+
 
         // 返回游戏按钮
         buttonBack.sprite.pivot.x = buttonBack.sprite.width / 2;
@@ -812,12 +822,12 @@ export default class Game {
     }
 
     init(coins, playCount, cells, chances, shares, rand) {
-        this.coins = coins;
-        this.playCount = playCount;
-        this.cells = cells;
-        this.chances = chances;
+        this.coins = coins; // 初始币数量
+        this.playCount = playCount; // 已玩次数
+        this.cells = cells; // object 数组 todo 改为随机
+        this.chances = chances; // 剩余钩子次数
         this.shares = shares;
-        this.rand = rand;
+        this.rand = rand; // 一个随机数
 
         this.initApp();
         this.initStage();

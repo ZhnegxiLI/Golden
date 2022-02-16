@@ -19,7 +19,7 @@ loadAssets(() => {
     const bump = new Bump(PIXI);
     const game = new Game(width, height, bump);
     game.init(
-        100,
+        0,
         0,
         [
             { type: 'coin', amount: 1 },

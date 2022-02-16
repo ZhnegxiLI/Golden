@@ -87,10 +87,6 @@ export const resources = {
         url: `images/coins_container.png`,
         sprite: '',
     },
-    iconText: {
-        url: `images/icon_text.png`,
-        sprite: '',
-    },
     textBottomHasChance: {
         url: `images/text_bottom_has_chance.png`,
         sprite: '',
