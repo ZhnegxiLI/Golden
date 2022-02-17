@@ -782,17 +782,14 @@ export default class Game {
             buttonShare.sprite.visible = false;
             this._textBottomHasChanceContainer.visible = true;
             textBottomChanceOut.sprite.visible = false;
-        } else if (this.shares == 0) {
-            // this.goldenHunter.ropeStop = true;
-            buttonShare.sprite.x = this._backgroundContainer_2.width / 2;
+        } 
 
-            buttonStart.sprite.visible = false;
-            buttonBack.sprite.visible = false;
-            buttonShare.sprite.visible = true;
-            this._textBottomHasChanceContainer.visible = true;
-            textBottomChanceOut.sprite.visible = false;
-        } else {
-            // this.goldenHunter.ropeStop = true;
+
+
+        if(this.checkWinGame()){
+            buttonStart.sprite.visible = true;
+        }
+        else if(this.checkGameOver()){
             buttonBack.sprite.x = this._backgroundContainer_2.width / 2;
 
             buttonStart.sprite.visible = false;
@@ -800,12 +797,6 @@ export default class Game {
             buttonShare.sprite.visible = false;
             this._textBottomHasChanceContainer.visible = false;
             textBottomChanceOut.sprite.visible = true;
-        }
-
-
-
-        if(this.checkWinGame()){
-            buttonStart.sprite.visible = true;
         }
     }
 

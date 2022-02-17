@@ -23,10 +23,16 @@ loadAssets(() => {
 
     let level = localStorage.getItem('level') ?? 0;
 
-    let {  propabilityList, chance, targetCoin } =  difficultySetting(parseInt(level))
+    let {
+        propabilityList,
+        chance,
+        targetCoin
+    } = difficultySetting(parseInt(level))
 
     let props = generateRandomProps(propabilityList); // todo improve this part
     console.log(props);
+
+    console.log('enought coin', checkHaveEnoughtCoins(checkLandmineNotMultipleInSameRow(props), targetCoin));
 
     game.init(
         0,
@@ -79,7 +85,7 @@ function random(arr1, arr2) {
 
 function randomCoinNumber(type) {
     let number = null;
-    let maxCoinNumber = 4;
+    let maxCoinNumber = 5;
     let minCoinNumber = 1;
     switch (type) {
         case 'coin':
@@ -108,4 +114,75 @@ function generateRandomProps(probabilityList) {
 
     return props;
 
+}
+
+function checkHaveEnoughtCoins(props, targetCoins) {
+    let totalCoin = calculTotalCoin(props);
+    console.log('inittial total coins', totalCoin);
+    if(totalCoin < targetCoins){
+        let landmineObj = getLandminePosition(props);
+
+        let restCoin = targetCoins - totalCoin;
+        for(let key in landmineObj){
+            landmineObj[key].map(i=>{
+                if(restCoin>0){
+                    if(restCoin>=3){
+                        props[i] = {
+                            type :'coin',
+                            amount : 3
+                        };
+                        restCoin = restCoin - 3;
+                    }
+                }
+            });
+        }
+    }
+
+    console.log('total coins', calculTotalCoin(props));
+    return props;
+}
+
+function calculTotalCoin(props){
+    let totalCoin = 0;
+    props.map(x => {
+        totalCoin = totalCoin + (x.type != 'landmine' ? x.amount : 0)
+    });
+    return totalCoin;
+}
+
+function checkLandmineNotMultipleInSameRow(props) {
+   
+    let landmineObj = getLandminePosition(props);
+
+    for (var key in landmineObj) {
+        if (landmineObj[key].length > 3) {
+            let rowLandmineNumber = landmineObj[key].length;
+            landmineObj[key].map(i=>{
+                if(rowLandmineNumber>3){
+                    props[i] = {
+                        type : 'coin',
+                        amount : randomCoinNumber('coin')
+                    }
+                    rowLandmineNumber = rowLandmineNumber - 1;
+                }
+            });
+        }
+    }
+    
+    return props;
+}
+
+function getLandminePosition(props){
+    let columnNumber = 4;
+    let landmineObj = {};
+    props.map((x, index) => {
+        if (x.type == 'landmine') {
+            let row = parseInt(index / columnNumber);
+            if (landmineObj[row] == null) {
+                landmineObj[row] = [];
+            }
+            landmineObj[row].push(index);
+        }
+    });
+    return landmineObj;
 }
